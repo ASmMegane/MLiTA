@@ -1,28 +1,48 @@
 #include "stdafx.h"
 #include "Data.h"
 
-void ReadFile(std::vector<std::string> & words, std::vector<std::string> & suprefiks)
+bool ReadFile(std::vector<std::string> & words, std::vector<std::string> & suprefiks)
 {
-	std::ifstream inputFile("input.txt");
-	int wordsVectorSize;
-	inputFile >> wordsVectorSize;
-	words.resize(wordsVectorSize);
-	for (int i = 0; i < wordsVectorSize; i++) 
+	try
 	{
-		inputFile >> words[i];
-	}
+		std::ifstream inputFile("input.txt");
+		int wordsVectorSize;
+		inputFile >> wordsVectorSize;
+		if (!(wordsVectorSize >= MIN_COUNT_WORD && wordsVectorSize <= MAX_COUNT_WORD))
+			throw std::out_of_range("");
+		words.resize(wordsVectorSize);
+		std::string str;
+		for (int i = 0; i < wordsVectorSize; i++)
+		{
+			inputFile >> str;
+			if (!(str.size() >= MIN_SIZE_WORD && str.size() <= MAX_SIZE_WORD))
+				throw std::out_of_range("");
+			words[i] = str;
+		}
 
-	int suprefiksVectorSize;
-	inputFile >> suprefiksVectorSize;
-	suprefiks.resize(suprefiksVectorSize);
-	for (int i = 0; i < suprefiksVectorSize; i++)
+		int suprefiksVectorSize;
+		inputFile >> suprefiksVectorSize;
+		if (!(suprefiksVectorSize >= MIN_COUNT_WORD && suprefiksVectorSize <= MAX_COUNT_WORD))
+			throw std::out_of_range("");
+		suprefiks.resize(suprefiksVectorSize);
+		for (int i = 0; i < suprefiksVectorSize; i++)
+		{
+			inputFile >> str;
+			if (!(str.size() >= MIN_SIZE_WORD && str.size() <= MAX_SIZE_WORD))
+				throw std::out_of_range("");
+			suprefiks[i] = str;
+		}
+		return true;
+	}
+	catch (...)
 	{
-		inputFile >> suprefiks[i];
+		std::cout << "File not exist or wrong file format." << std::endl;
+		return false;
 	}
 }
 
 
-int CountSuprefikWord(std::vector<Word> & allWord, int startPosition, std::vector<int> & suprefiks)
+int CountSuprefikWord(const std::vector<Word> & allWord, int startPosition, std::vector<int> & suprefiks)
 {
 	int countSupref = 0;
 	while (startPosition + countSupref + 1 < allWord.size() && allWord[startPosition].word == allWord[startPosition + countSupref + 1].word.substr(0, allWord[startPosition].word.size()))
@@ -37,7 +57,7 @@ int CountSuprefikWord(std::vector<Word> & allWord, int startPosition, std::vecto
 	return countSupref;
 }
 
-void OutputResult(std::vector<Word> & allWord, int countSuprefiks)
+void OutputResult(const std::vector<Word> & allWord, int countSuprefiks)
 {
 	std::vector<int> suprefiks(countSuprefiks, 0);
 	int i = 0;
@@ -53,13 +73,13 @@ void OutputResult(std::vector<Word> & allWord, int countSuprefiks)
 		}
 	}
 	std::ofstream outputFile("output.txt");
-	for (int i = 0; i < suprefiks.size(); i++)
+	for (auto suprefik : suprefiks)
 	{
-		outputFile << suprefiks[i] << std::endl;
+		outputFile << suprefik << std::endl;
 	}
 }
 
-void CreateWord(std::vector<std::string> & words, std::vector<Word> & allWord, int & counterAllWord, bool isSupref)
+void CreateWord(const std::vector<std::string> & words, std::vector<Word> & allWord, int & counterAllWord, bool isSupref)
 {
 	for (int i = 0; i < words.size(); i++) {
 		int sizeWord = words[i].size();
@@ -73,7 +93,7 @@ void CreateWord(std::vector<std::string> & words, std::vector<Word> & allWord, i
 	}
 }
 
-void MergerWordsAndSuprefiks(std::vector<std::string> & words, std::vector<std::string> & suprefiks, std::vector<Word> & allWord)
+void MergerWordsAndSuprefiks(const std::vector<std::string> & words, const std::vector<std::string> & suprefiks, std::vector<Word> & allWord)
 {
 	allWord.resize(words.size() + suprefiks.size());
 	int counterAllWord = 0;
@@ -108,10 +128,12 @@ void FindeSuprefiks() {
 	std::vector<std::string> allSuprefiks;
 	std::vector<Word> mergedWordsAndSuprefiks;
 	std::map<std::string, int> countSuprefiks;
-	ReadFile(allWords, allSuprefiks);
-	MergerWordsAndSuprefiks(allWords, allSuprefiks, mergedWordsAndSuprefiks);
-	SortWords(mergedWordsAndSuprefiks);
-	OutputResult(mergedWordsAndSuprefiks, allSuprefiks.size());
+	if (ReadFile(allWords, allSuprefiks))
+	{
+		MergerWordsAndSuprefiks(allWords, allSuprefiks, mergedWordsAndSuprefiks);
+		SortWords(mergedWordsAndSuprefiks);
+		OutputResult(mergedWordsAndSuprefiks, allSuprefiks.size());
+	}
 }
 
 
