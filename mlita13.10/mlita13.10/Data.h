@@ -12,5 +12,5 @@ const unsigned short MAX_SIZE_WORD = 50;
 
 struct Word {
 	std::string word;
-	int numberSuprefik;
+	int numberSuperfik;
 };

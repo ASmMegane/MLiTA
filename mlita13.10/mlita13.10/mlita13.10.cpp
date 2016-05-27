@@ -1,18 +1,18 @@
 #include "stdafx.h"
 #include "Data.h"
 
-bool ReadFile(std::vector<std::string> & words, std::vector<std::string> & suprefiks)
+bool ReadFile(std::vector<std::string> & words, std::vector<std::string> & superfiks, const std::string & inFile)
 {
 	try
 	{
-		std::ifstream inputFile("input.txt");
-		int wordsVectorSize;
+		std::ifstream inputFile(inFile);
+		size_t wordsVectorSize;
 		inputFile >> wordsVectorSize;
 		if (!(wordsVectorSize >= MIN_COUNT_WORD && wordsVectorSize <= MAX_COUNT_WORD))
 			throw std::out_of_range("");
 		words.resize(wordsVectorSize);
 		std::string str;
-		for (int i = 0; i < wordsVectorSize; i++)
+		for (size_t i = 0; i < wordsVectorSize; i++)
 		{
 			inputFile >> str;
 			if (!(str.size() >= MIN_SIZE_WORD && str.size() <= MAX_SIZE_WORD))
@@ -20,17 +20,17 @@ bool ReadFile(std::vector<std::string> & words, std::vector<std::string> & supre
 			words[i] = str;
 		}
 
-		int suprefiksVectorSize;
-		inputFile >> suprefiksVectorSize;
-		if (!(suprefiksVectorSize >= MIN_COUNT_WORD && suprefiksVectorSize <= MAX_COUNT_WORD))
+		size_t superfiksVectorSize;
+		inputFile >> superfiksVectorSize;
+		if (!(superfiksVectorSize >= MIN_COUNT_WORD && superfiksVectorSize <= MAX_COUNT_WORD))
 			throw std::out_of_range("");
-		suprefiks.resize(suprefiksVectorSize);
-		for (int i = 0; i < suprefiksVectorSize; i++)
+		superfiks.resize(superfiksVectorSize);
+		for (size_t i = 0; i < superfiksVectorSize; i++)
 		{
 			inputFile >> str;
 			if (!(str.size() >= MIN_SIZE_WORD && str.size() <= MAX_SIZE_WORD))
 				throw std::out_of_range("");
-			suprefiks[i] = str;
+			superfiks[i] = str;
 		}
 		return true;
 	}
@@ -42,52 +42,52 @@ bool ReadFile(std::vector<std::string> & words, std::vector<std::string> & supre
 }
 
 
-int CountSuprefikWord(const std::vector<Word> & allWord, int startPosition, std::vector<int> & suprefiks)
+size_t CountSuperfikWord(const std::vector<Word> & allWord, size_t startPosition, std::vector<size_t> & superfiks)
 {
-	int countSupref = 0;
-	while (startPosition + countSupref + 1 < allWord.size() && allWord[startPosition].word == allWord[startPosition + countSupref + 1].word.substr(0, allWord[startPosition].word.size()))
+	size_t countSuperfik = 0;
+	while (startPosition + countSuperfik + 1 < allWord.size() && allWord[startPosition].word == allWord[startPosition + countSuperfik + 1].word.substr(0, allWord[startPosition].word.size()))
 	{
-		countSupref++;
-		if (allWord[startPosition + countSupref].numberSuprefik >= 0)
+		countSuperfik++;
+		if (allWord[startPosition + countSuperfik].numberSuperfik >= 0)
 		{
-			countSupref += CountSuprefikWord(allWord, startPosition + countSupref, suprefiks);
+			countSuperfik += CountSuperfikWord(allWord, startPosition + countSuperfik, superfiks);
 		}
 	}
-	suprefiks[allWord[startPosition].numberSuprefik] = countSupref;
-	return countSupref;
+	superfiks[allWord[startPosition].numberSuperfik] = countSuperfik;
+	return countSuperfik;
 }
 
-void OutputResult(const std::vector<Word> & allWord, int countSuprefiks)
+void OutputResult(const std::vector<Word> & allWord, size_t countSuprefiks, const std::string & outFile)
 {
-	std::vector<int> suprefiks(countSuprefiks, 0);
-	int i = 0;
+	std::vector<size_t> suprefiks(countSuprefiks, 0);
+	size_t i = 0;
 	while (i < allWord.size())
 	{
-		if (allWord[i].numberSuprefik >= 0) 
+		if (allWord[i].numberSuperfik >= 0) 
 		{
-			i += CountSuprefikWord(allWord, i, suprefiks);
+			i += CountSuperfikWord(allWord, i, suprefiks) + 1;
 		}
 		else
 		{
 			i++;
 		}
 	}
-	std::ofstream outputFile("output.txt");
-	for (auto suprefik : suprefiks)
+	std::ofstream outputFile(outFile);
+	for (size_t i = 0; i < suprefiks.size(); i++)
 	{
-		outputFile << suprefik << std::endl;
+		outputFile << suprefiks[i] << std::endl;
 	}
 }
 
-void CreateWord(const std::vector<std::string> & words, std::vector<Word> & allWord, int & counterAllWord, bool isSupref)
+void CreateWord(const std::vector<std::string> & words, std::vector<Word> & allWord, size_t & counterAllWord, bool isSupref)
 {
-	for (int i = 0; i < words.size(); i++) {
-		int sizeWord = words[i].size();
+	for (size_t i = 0; i < words.size(); i++) {
+		size_t sizeWord = words[i].size();
 		std::string newWord = "";
-		for (int n = 0; n < sizeWord; n++) {
+		for (size_t n = 0; n < sizeWord; n++) {
 			newWord += words[i].substr(n,1) + words[i].substr(sizeWord - 1 - n, 1);
 		}
-		allWord[counterAllWord].numberSuprefik = (isSupref) ? i : -1 ;
+		allWord[counterAllWord].numberSuperfik = (isSupref) ? i : -1 ;
 		allWord[counterAllWord].word = newWord;
 		counterAllWord++;
 	}
@@ -96,19 +96,19 @@ void CreateWord(const std::vector<std::string> & words, std::vector<Word> & allW
 void MergerWordsAndSuprefiks(const std::vector<std::string> & words, const std::vector<std::string> & suprefiks, std::vector<Word> & allWord)
 {
 	allWord.resize(words.size() + suprefiks.size());
-	int counterAllWord = 0;
+	size_t counterAllWord = 0;
 	CreateWord(words, allWord, counterAllWord, false);
 	CreateWord(suprefiks, allWord, counterAllWord, true);
 }
 
 void SortWords(std::vector<Word> & allWord) 
 {
-	int sizeUnsortVector = allWord.size();
+	size_t sizeUnsortVector = allWord.size();
 	bool isSorted = false;
 	while (!isSorted)
 	{
 		isSorted = true;
-		for (int i = 0; i < sizeUnsortVector - 1; i++) 
+		for (size_t i = 0; i < sizeUnsortVector - 1; i++) 
 		{
 			if (allWord[i].word > allWord[i + 1].word) 
 			{
@@ -123,23 +123,27 @@ void SortWords(std::vector<Word> & allWord)
 	}
 }
 
-void FindeSuprefiks() {
+void FindeSuprefiks(const std::string & inFile, const std::string & outFile) {
 	std::vector<std::string> allWords;
-	std::vector<std::string> allSuprefiks;
-	std::vector<Word> mergedWordsAndSuprefiks;
-	std::map<std::string, int> countSuprefiks;
-	if (ReadFile(allWords, allSuprefiks))
+	std::vector<std::string> allSuperfiks;
+	std::vector<Word> mergedWordsAndSuperfiks;
+	if (ReadFile(allWords, allSuperfiks, inFile))
 	{
-		MergerWordsAndSuprefiks(allWords, allSuprefiks, mergedWordsAndSuprefiks);
-		SortWords(mergedWordsAndSuprefiks);
-		OutputResult(mergedWordsAndSuprefiks, allSuprefiks.size());
+		MergerWordsAndSuprefiks(allWords, allSuperfiks, mergedWordsAndSuperfiks);
+		SortWords(mergedWordsAndSuperfiks);
+		OutputResult(mergedWordsAndSuperfiks, allSuperfiks.size(), outFile);
 	}
 }
 
 
-int main()
+int main(int argc, char *argv[])
 {
-	FindeSuprefiks();
+	if (argc != 3)
+	{
+		return 1;
+	}
+
+	FindeSuprefiks(argv[1], argv[2]);
     return 0;
 }
 

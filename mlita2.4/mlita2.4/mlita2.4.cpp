@@ -1,17 +1,17 @@
 #include "stdafx.h"
 #include "Data.h"
 
-bool ReadFile(std::vector<Planet> & fuelPlanet)
+bool ReadFile(std::vector<Planet> & fuelPlanet, const std::string & file)
 {
 	try
 	{
-		std::ifstream inputFile("input.txt");
+		std::ifstream inputFile(file);
 		size_t countPlanet;
 		inputFile >> countPlanet;
 		if (!(countPlanet >= MIN_COUNT_PLANETS && countPlanet <= MAX_COUNT_PLANETS))
 			throw std::out_of_range("");
 		fuelPlanet.resize(countPlanet);
-		for (int i = 0; i < countPlanet; i++)
+		for (size_t i = 0; i < countPlanet; i++)
 		{
 			inputFile >> fuelPlanet[i].typeFuel;
 		}
@@ -24,16 +24,16 @@ bool ReadFile(std::vector<Planet> & fuelPlanet)
 	}
 }
 
-int TreatmentPlanet(std::vector<Planet> & planets, int numberOfPlanet , int startStep)
+int TreatmentPlanet(std::vector<Planet> & planets, size_t numberOfPlanet , size_t startStep)
 {
-	bool isNextPlanetTrue = true;
+	bool isNextPlanetExist = true;
 	if (startStep <= planets[numberOfPlanet].nextPlanetWithSameFuel)
 	{
-		while (isNextPlanetTrue && startStep < planets.size())
+		while (isNextPlanetExist && startStep < planets.size())
 		{
 			if (planets[numberOfPlanet].typeFuel == planets[startStep].typeFuel)
 			{
-				isNextPlanetTrue = false;
+				isNextPlanetExist = false;
 			}
 			if (planets[startStep].countFlight == 0 || planets[startStep].countFlight < planets[numberOfPlanet].countFlight)
 			{
@@ -48,8 +48,8 @@ int TreatmentPlanet(std::vector<Planet> & planets, int numberOfPlanet , int star
 
 void FindWay(std::vector<Planet> & planets)
 {
-	int nextStep = 1;
-	for (int i = 0; i < planets.size() - 1; i++)
+	size_t nextStep = 1;
+	for (size_t i = 0; i < planets.size() - 1; i++)
 	{
 		if (planets[i].isGoodPlanet)
 		{
@@ -90,9 +90,9 @@ void MarksPlanets(std::vector<Planet> & planets)
 }
 
 
-void OutputResult(std::vector<Planet> & planets)
+void OutputResult(std::vector<Planet> & planets, const std::string & outFile)
 {
-	std::ofstream outputFile("output.txt");
+	std::ofstream outputFile(outFile);
 	if (planets[planets.size() - 1].countFlight == 0)
 	{
 		outputFile << 0;
@@ -107,27 +107,31 @@ void OutputResult(std::vector<Planet> & planets)
 			way.insert(way.begin(), i);
 			i = planets[i].previousPlanet;
 		}
-		for (auto k : way)
+		for (auto numberPlanetForFuel : way)
 		{
-			outputFile << k + 1 << " ";
+			outputFile << numberPlanetForFuel + 1 << " ";
 		}
 	}
 }
 
-void StarWay()
+void StarWay(const std::string & inFile, const std::string & outFile)
 {
 	std::vector<Planet> planets;
-	if (ReadFile(planets))
+	if (ReadFile(planets, inFile))
 	{
 		MarksPlanets(planets);
 		FindWay(planets);
-		OutputResult(planets);
+		OutputResult(planets, outFile);
 	}
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-	StarWay();
+	if (argc != 3)
+	{
+		return 1;
+	}
+	StarWay(argv[1], argv[2]);
     return 0;
 }
 
